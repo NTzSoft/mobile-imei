@@ -23,10 +23,24 @@
     </div>
   </main>
 
+  <!-- Modal Overlay -->
+  <div id="modal-overlay" class="fixed inset-0 bg-black bg-opacity-50 hidden flex justify-center items-center z-50">
+    <div class="bg-white rounded-lg shadow-lg p-6 w-full max-w-md">
+      <h2 class="text-xl font-semibold mb-4">ยืนยันการ Active</h2>
+      <p class="mb-2">หมายเหตุ:</p>
+      <textarea id="modal-note" rows="3" class="w-full border rounded p-2 mb-4" >Active เอง</textarea>
+      <div class="flex justify-end gap-4">
+        <button onclick="closeModal()" class="px-4 py-2 rounded border border-gray-400 hover:bg-gray-100">ยกเลิก</button>
+        <button onclick="confirmActive()" class="px-4 py-2 rounded bg-blue-600 text-white hover:bg-blue-700">ยืนยัน</button>
+      </div>
+    </div>
+  </div>
+
   <script>
     const csvUrl = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSVlzVoxxhwFOFIfeQQEkPLbXHjdnyvuYTi6-UQJnldE9txyBc-EQbGKqwDP1j8-6zZoZC8r846lt1Q/pub?output=csv";
 
     let rawData = [];
+    let currentEditIndex = null;  // เก็บตำแหน่งข้อมูลที่กำลังแก้ไข
 
     function csvToJson(csv) {
       const lines = csv.trim().split('\n');
@@ -72,7 +86,7 @@
         return;
       }
 
-      data.forEach(row => {
+      data.forEach((row, index) => {
         const box = document.createElement('div');
         box.className = "bg-white rounded-lg shadow p-4 flex flex-col justify-between";
 
@@ -91,11 +105,16 @@
             <p class="${statusColor}"><span class="font-semibold">สถานะ:</span> ${row["สถานะ"] || 'ยังไม่ Active'}</p>
             <p class="text-sm text-gray-400"><span class="font-semibold">หมายเหตุ:</span> ${row["หมายเหตุ"] || '-'}</p>
           </div>
-          <div class="mt-4">
+          <div class="mt-4 flex gap-2">
             <button
               class="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded"
               onclick="copyToClipboard('${row["IMEI"]}')"
             >Copy IMEI</button>
+            ${row["สถานะ"] !== 'Active' ? `
+            <button
+              class="bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded"
+              onclick="openModal(${index})"
+            >Active</button>` : ''}
           </div>
         `;
         container.appendChild(box);
@@ -109,6 +128,36 @@
         const filtered = rawData.filter(row => (row["สถานะ"] || '') === status);
         renderBoxes(filtered);
       }
+    }
+
+    // Modal Control
+    function openModal(index) {
+      currentEditIndex = index;
+      document.getElementById('modal-note').value = 'Active เอง';
+      document.getElementById('modal-overlay').classList.remove('hidden');
+    }
+
+    function closeModal() {
+      currentEditIndex = null;
+      document.getElementById('modal-overlay').classList.add('hidden');
+    }
+
+    function confirmActive() {
+      if (currentEditIndex === null) return;
+
+      const note = document.getElementById('modal-note').value.trim();
+      if (!note) {
+        alert('กรุณาใส่หมายเหตุ');
+        return;
+      }
+
+      // เปลี่ยนสถานะในข้อมูล rawData
+      rawData[currentEditIndex]["สถานะ"] = "Active";
+      rawData[currentEditIndex]["หมายเหตุ"] = note;
+
+      // ปิด modal และรีเฟรชการแสดงผล
+      closeModal();
+      renderBoxes(rawData);
     }
 
     loadData();
