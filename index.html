@@ -7,7 +7,9 @@
   <script src="https://cdn.tailwindcss.com"></script>
 </head>
 <body class="bg-gray-100">
-  <div id="auth-screen" class="fixed inset-0 bg-gray-900 bg-opacity-90 flex items-center justify-center z-50">
+
+  <!-- Auth Screen -->
+  <div id="auth-screen" class="fixed inset-0 bg-gray-900 bg-opacity-95 flex items-center justify-center z-50">
     <div class="bg-white rounded-lg shadow-lg p-6 max-w-sm w-full">
       <h2 class="text-lg font-semibold mb-4 text-center">กรุณาใส่รหัสผ่านเพื่อเข้าสู่ระบบ</h2>
       <input id="password-input" type="password" placeholder="รหัสผ่าน" class="w-full px-3 py-2 border rounded mb-4 focus:outline-none focus:ring focus:border-blue-300">
@@ -15,51 +17,59 @@
       <p id="error-msg" class="text-red-500 text-sm mt-2 text-center hidden">รหัสผ่านไม่ถูกต้อง</p>
     </div>
   </div>
-  
-  <header class="bg-blue-600 text-white p-4 shadow-md flex justify-between items-center">
-    <h1 class="text-xl font-semibold">แสดงสถานะเครื่องมือถือ</h1>
-    <a href="https://support.oppo.com/en/warranty-check/" target="_blank" class="bg-white text-blue-600 hover:bg-blue-100 px-4 py-2 rounded font-medium">
-      Warranty Check
-    </a>
-  </header>
 
+  <!-- Main Content -->
+  <div id="main-content" style="display: none;">
+    <header class="bg-blue-600 text-white p-4 shadow-md flex justify-between items-center">
+      <h1 class="text-xl font-semibold">แสดงสถานะเครื่องมือถือ</h1>
+      <a href="https://support.oppo.com/en/warranty-check/" target="_blank" class="bg-white text-blue-600 px-4 py-2 rounded hover:bg-blue-100">Warranty Check</a>
+    </header>
 
-  <main class="p-6">
-    <div class="mb-6 flex gap-2">
-      <button onclick="filterStatus('all')" class="bg-gray-300 hover:bg-gray-400 text-black px-4 py-2 rounded">ทั้งหมด</button>
-      <button onclick="filterStatus('Active')" class="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded">Active</button>
-      <button onclick="filterStatus('')" class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded">ยังไม่ Active</button>
-    </div>
+    <main class="p-4">
+      <div class="mb-4 flex gap-2">
+        <button onclick="filterStatus('all')" class="bg-gray-300 hover:bg-gray-400 text-black px-4 py-2 rounded">ทั้งหมด</button>
+        <button onclick="filterStatus('Active')" class="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded">Active</button>
+        <button onclick="filterStatus('')" class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded">ยังไม่ Active</button>
+      </div>
 
-    <div id="data-container" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-      <!-- กล่องมือถือจะถูกสร้างที่นี่ -->
-    </div>
-  </main>
+      <div id="alert-box" class="fixed bottom-4 right-4 bg-blue-600 text-white px-4 py-2 rounded shadow hidden z-40">
+        Copy IMEI แล้ว
+      </div>
 
-  <!-- Modal Overlay -->
-  <div id="modal-overlay" class="fixed inset-0 bg-black bg-opacity-50 hidden flex justify-center items-center z-50">
-    <div class="bg-white rounded-lg shadow-lg p-6 w-full max-w-md">
-      <h2 id="modal-title" class="text-xl font-semibold mb-4">ยืนยันการเปลี่ยนสถานะ</h2>
-      <p class="mb-2">หมายเหตุ:</p>
-      <textarea id="modal-note" rows="3" class="w-full border rounded p-2 mb-4"></textarea>
-      <div class="flex justify-end gap-4">
-        <button onclick="closeModal()" class="px-4 py-2 rounded border border-gray-400 hover:bg-gray-100">ยกเลิก</button>
-        <button onclick="confirmChangeStatus()" class="px-4 py-2 rounded bg-blue-600 text-white hover:bg-blue-700">ยืนยัน</button>
+      <div id="card-container" class="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3"></div>
+    </main>
+
+    <!-- Modal -->
+    <div id="modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-50">
+      <div class="bg-white rounded-lg shadow-lg p-6 w-full max-w-md">
+        <h2 class="text-lg font-semibold mb-4" id="modal-title">ยืนยันการเปลี่ยนสถานะ</h2>
+        <input type="text" id="remark-input" class="w-full px-3 py-2 border rounded mb-4" placeholder="หมายเหตุ (เช่น Active เอง)">
+        <div class="flex justify-end gap-2">
+          <button onclick="closeModal()" class="bg-gray-300 px-4 py-2 rounded">ยกเลิก</button>
+          <button onclick="confirmStatusChange()" class="bg-blue-600 text-white px-4 py-2 rounded">ยืนยัน</button>
+        </div>
       </div>
     </div>
   </div>
 
   <script>
     const csvUrl = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSVlzVoxxhwFOFIfeQQEkPLbXHjdnyvuYTi6-UQJnldE9txyBc-EQbGKqwDP1j8-6zZoZC8r846lt1Q/pub?output=csv";
-
     let rawData = [];
-    let currentEditIndex = null;
-    let currentAction = null; // "active" หรือ "deactive"
+    let currentRow = null;
+
+    function checkPassword() {
+      const password = document.getElementById("password-input").value;
+      if (password === "424520") {
+        document.getElementById("auth-screen").style.display = "none";
+        document.getElementById("main-content").style.display = "block";
+      } else {
+        document.getElementById("error-msg").classList.remove("hidden");
+      }
+    }
 
     function csvToJson(csv) {
       const lines = csv.trim().split('\n');
       const headers = lines[0].split(',');
-
       return lines.slice(1).map(line => {
         const values = line.split(',');
         let obj = {};
@@ -72,168 +82,78 @@
 
     function loadData() {
       fetch(csvUrl)
-        .then(response => response.text())
+        .then(res => res.text())
         .then(csvText => {
           rawData = csvToJson(csvText);
-          renderBoxes(rawData);
+          renderCards(rawData);
         })
         .catch(err => {
-          console.error('Error loading CSV:', err);
-          alert('ไม่สามารถโหลดข้อมูลจาก Google Sheets ได้');
+          console.error("โหลดข้อมูลล้มเหลว", err);
+          alert("โหลดข้อมูลจาก Google Sheets ไม่ได้");
         });
     }
-  
-    function copyToClipboard(text) {
-      navigator.clipboard.writeText(text).then(() => {
-        showToast(`คัดลอก IMEI แล้ว: ${text}`);
-      }).catch(() => {
-        showToast('ไม่สามารถคัดลอก IMEI ได้');
-      });
-    }
-    
-    function showToast(message) {
-      const toast = document.getElementById('toast');
-      toast.textContent = message;
-      toast.classList.remove('hidden');
-    
-      // ล้าง timeout เก่า (ถ้ามี)
-      if (window.toastTimeout) clearTimeout(window.toastTimeout);
-    
-      // ซ่อนหลัง 2.5 วิ
-      window.toastTimeout = setTimeout(() => {
-        toast.classList.add('hidden');
-      }, 2500);
-    }
 
-    function renderBoxes(data) {
-      const container = document.getElementById('data-container');
+    function renderCards(data) {
+      const container = document.getElementById('card-container');
       container.innerHTML = '';
-
-      if (data.length === 0) {
-        container.innerHTML = '<p class="text-center text-gray-500 col-span-full">ไม่มีข้อมูล</p>';
-        return;
-      }
-
       data.forEach((row, index) => {
-        const box = document.createElement('div');
-        box.className = "bg-white rounded-lg shadow p-4 flex flex-col justify-between";
-
-        let statusColor = 'text-gray-500';
-        if (row["สถานะ"] === 'Active') statusColor = 'text-green-600 font-semibold';
-        else if (row["สถานะ"] === '') statusColor = 'text-red-600 font-semibold';
-
-        // ปุ่มสำหรับสถานะ Active กับ Deactive
-        let actionButton = '';
-        if (row["สถานะ"] === 'Active') {
-          actionButton = `
-            <button
-              class="bg-yellow-600 hover:bg-yellow-700 text-white px-3 py-1 rounded"
-              onclick="openModal(${index}, 'deactive')"
-            >Deactive</button>
-          `;
-        } else {
-          actionButton = `
-            <button
-              class="bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded"
-              onclick="openModal(${index}, 'active')"
-            >Active</button>
-          `;
-        }
-
-        box.innerHTML = `
-          <div>
-            <h2 class="text-lg font-bold mb-1">${row["รุ่น"] || '-'}</h2>
-            <p class="text-sm mb-1"><span class="font-semibold">สี:</span> ${row["สี"] || '-'}</p>
-            <p class="text-sm mb-1"><span class="font-semibold">ร้าน:</span> ${row["ร้าน"] || '-'}</p>
-            <p class="text-sm mb-1"><span class="font-semibold">IMEI:</span> ${row["IMEI"] || '-'}</p>
-          </div>
-          <div class="mt-3">
-            <p class="${statusColor}"><span class="font-semibold">สถานะ:</span> ${row["สถานะ"] || 'ยังไม่ Active'}</p>
-            <p class="text-sm text-gray-400"><span class="font-semibold">หมายเหตุ:</span> ${row["หมายเหตุ"] || '-'}</p>
-          </div>
-          <div class="mt-4 flex gap-2">
-            <button
-              class="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded"
-              onclick="copyToClipboard('${row["IMEI"]}')"
-            >Copy IMEI</button>
-            ${actionButton}
+        const card = document.createElement('div');
+        card.className = "bg-white rounded-lg p-4 shadow border";
+        card.innerHTML = `
+          <h2 class="text-lg font-semibold mb-2">${row["รุ่น"] || '-'}</h2>
+          <p><strong>สี:</strong> ${row["สี"] || '-'}</p>
+          <p><strong>ร้าน:</strong> ${row["ร้าน"] || '-'}</p>
+          <p><strong>IMEI:</strong> ${row["IMEI"] || '-'}</p>
+          <p><strong>สถานะ:</strong> ${row["สถานะ"] || '-'}</p>
+          <p><strong>หมายเหตุ:</strong> ${row["หมายเหตุ"] || '-'}</p>
+          <div class="mt-3 flex gap-2">
+            <button onclick="copyIMEI('${row["IMEI"]}')" class="bg-blue-500 text-white px-3 py-1 rounded hover:bg-blue-600 text-sm">Copy IMEI</button>
+            ${row["สถานะ"] === "Active"
+              ? `<button onclick="openModal(${index}, 'deactive')" class="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600 text-sm">Deactive</button>`
+              : `<button onclick="openModal(${index}, 'active')" class="bg-green-500 text-white px-3 py-1 rounded hover:bg-green-600 text-sm">Active</button>`
+            }
           </div>
         `;
-        container.appendChild(box);
+        container.appendChild(card);
       });
     }
 
     function filterStatus(status) {
-      if (status === 'all') {
-        renderBoxes(rawData);
+      if (status === "all") {
+        renderCards(rawData);
       } else {
-        const filtered = rawData.filter(row => (row["สถานะ"] || '') === status);
-        renderBoxes(filtered);
+        renderCards(rawData.filter(row => (row["สถานะ"] || "") === status));
       }
+    }
+
+    function copyIMEI(imei) {
+      navigator.clipboard.writeText(imei);
+      const alert = document.getElementById('alert-box');
+      alert.classList.remove('hidden');
+      setTimeout(() => alert.classList.add('hidden'), 2000);
     }
 
     function openModal(index, action) {
-      currentEditIndex = index;
-      currentAction = action;
-
-      const modalTitle = document.getElementById('modal-title');
-      const modalNote = document.getElementById('modal-note');
-
-      if (action === 'active') {
-        modalTitle.textContent = 'ยืนยันการ Active';
-        modalNote.value = 'Active เอง';
-      } else if (action === 'deactive') {
-        modalTitle.textContent = 'ยืนยันการ Deactive';
-        modalNote.value = 'Deactive เอง';
-      }
-
-      document.getElementById('modal-overlay').classList.remove('hidden');
+      currentRow = { index, action };
+      document.getElementById('remark-input').value = action === 'active' ? 'Active เอง' : 'Deactive เอง';
+      document.getElementById('modal-title').innerText = action === 'active' ? 'ยืนยันการ Active' : 'ยืนยันการ Deactive';
+      document.getElementById('modal').classList.remove('hidden');
     }
 
     function closeModal() {
-      currentEditIndex = null;
-      currentAction = null;
-      document.getElementById('modal-overlay').classList.add('hidden');
+      document.getElementById('modal').classList.add('hidden');
     }
 
-    function confirmChangeStatus() {
-      if (currentEditIndex === null || currentAction === null) return;
-
-      const note = document.getElementById('modal-note').value.trim();
-      if (!note) {
-        alert('กรุณาใส่หมายเหตุ');
-        return;
-      }
-
-      if (currentAction === 'active') {
-        rawData[currentEditIndex]["สถานะ"] = "Active";
-        rawData[currentEditIndex]["หมายเหตุ"] = note;
-      } else if (currentAction === 'deactive') {
-        rawData[currentEditIndex]["สถานะ"] = "";
-        rawData[currentEditIndex]["หมายเหตุ"] = note;
-      }
-
+    function confirmStatusChange() {
+      const remark = document.getElementById('remark-input').value || '-';
+      const row = rawData[currentRow.index];
+      row["สถานะ"] = currentRow.action === 'active' ? 'Active' : '';
+      row["หมายเหตุ"] = remark;
+      renderCards(rawData);
       closeModal();
-      renderBoxes(rawData);
-    }
-
-    function checkPassword() {
-      const password = document.getElementById("password-input").value;
-      const errorMsg = document.getElementById("error-msg");
-    
-      if (password === "424520") {
-        document.getElementById("auth-screen").style.display = "none";
-      } else {
-        errorMsg.classList.remove("hidden");
-      }
     }
 
     loadData();
   </script>
-  
-  <!-- Toast Notification -->
-  <div id="toast" class="fixed bottom-5 right-5 bg-blue-500 text-white px-4 py-2 rounded shadow-lg hidden z-50"></div>
 </body>
-
-
 </html>
