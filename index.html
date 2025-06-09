@@ -29,7 +29,7 @@
       <div class="mb-4 flex gap-2">
         <button onclick="filterStatus('all')" class="bg-gray-300 hover:bg-gray-400 text-black px-4 py-2 rounded">ทั้งหมด</button>
         <button onclick="filterStatus('Active')" class="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded">Active</button>
-        <button onclick="filterStatus('')" class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded">ยังไม่ Active</button>
+        <button onclick="filterStatus('')" class="bg-yellow-500 hover:bg-yellow-600 text-white px-4 py-2 rounded">ยังไม่ Active</button>
       </div>
 
       <div id="alert-box" class="fixed bottom-4 right-4 bg-blue-600 text-white px-4 py-2 rounded shadow hidden z-40">
@@ -97,6 +97,10 @@
       const container = document.getElementById('card-container');
       container.innerHTML = '';
       data.forEach((row, index) => {
+        const status = row["สถานะ"] || '';
+        const statusColor = status === "Active" ? "bg-green-100 text-green-800" : "bg-yellow-100 text-yellow-800";
+        const statusLabel = status === "Active" ? "Active" : "ยังไม่ Active";
+
         const card = document.createElement('div');
         card.className = "bg-white rounded-lg p-4 shadow border";
         card.innerHTML = `
@@ -104,11 +108,11 @@
           <p><strong>สี:</strong> ${row["สี"] || '-'}</p>
           <p><strong>ร้าน:</strong> ${row["ร้าน"] || '-'}</p>
           <p><strong>IMEI:</strong> ${row["IMEI"] || '-'}</p>
-          <p><strong>สถานะ:</strong> ${row["สถานะ"] || '-'}</p>
+          <p><strong>สถานะ:</strong> <span class="px-2 py-1 rounded text-sm ${statusColor}">${statusLabel}</span></p>
           <p><strong>หมายเหตุ:</strong> ${row["หมายเหตุ"] || '-'}</p>
-          <div class="mt-3 flex gap-2">
+          <div class="mt-3 flex gap-2 flex-wrap">
             <button onclick="copyIMEI('${row["IMEI"]}')" class="bg-blue-500 text-white px-3 py-1 rounded hover:bg-blue-600 text-sm">Copy IMEI</button>
-            ${row["สถานะ"] === "Active"
+            ${status === "Active"
               ? `<button onclick="openModal(${index}, 'deactive')" class="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600 text-sm">Deactive</button>`
               : `<button onclick="openModal(${index}, 'active')" class="bg-green-500 text-white px-3 py-1 rounded hover:bg-green-600 text-sm">Active</button>`
             }
