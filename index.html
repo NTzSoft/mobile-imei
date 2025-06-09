@@ -26,20 +26,28 @@
     </header>
 
     <main class="p-4">
-      <div class="mb-4 flex gap-2">
+      <!-- Filter Buttons -->
+      <div class="mb-4 flex flex-wrap gap-2 items-center">
         <button onclick="filterStatus('all')" class="bg-gray-300 hover:bg-gray-400 text-black px-4 py-2 rounded">ทั้งหมด</button>
         <button onclick="filterStatus('Active')" class="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded">Active</button>
         <button onclick="filterStatus('')" class="bg-yellow-500 hover:bg-yellow-600 text-white px-4 py-2 rounded">ยังไม่ Active</button>
+
+        <!-- Dropdown ร้านค้า -->
+        <select id="shop-select" onchange="filterByShop()" class="ml-auto border px-3 py-2 rounded">
+          <option value="all">-- ร้านทั้งหมด --</option>
+        </select>
       </div>
 
+      <!-- แจ้งเตือน Copy -->
       <div id="alert-box" class="fixed bottom-4 right-4 bg-blue-600 text-white px-4 py-2 rounded shadow hidden z-40">
         Copy IMEI แล้ว
       </div>
 
+      <!-- Card List -->
       <div id="card-container" class="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3"></div>
     </main>
 
-    <!-- Modal -->
+    <!-- Modal ยืนยัน -->
     <div id="modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-50">
       <div class="bg-white rounded-lg shadow-lg p-6 w-full max-w-md">
         <h2 class="text-lg font-semibold mb-4" id="modal-title">ยืนยันการเปลี่ยนสถานะ</h2>
@@ -55,6 +63,7 @@
   <script>
     const csvUrl = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSVlzVoxxhwFOFIfeQQEkPLbXHjdnyvuYTi6-UQJnldE9txyBc-EQbGKqwDP1j8-6zZoZC8r846lt1Q/pub?output=csv";
     let rawData = [];
+    let filteredData = [];
     let currentRow = null;
 
     function checkPassword() {
@@ -85,12 +94,25 @@
         .then(res => res.text())
         .then(csvText => {
           rawData = csvToJson(csvText);
-          renderCards(rawData);
+          filteredData = [...rawData];
+          populateShops(rawData);
+          renderCards(filteredData);
         })
         .catch(err => {
           console.error("โหลดข้อมูลล้มเหลว", err);
           alert("โหลดข้อมูลจาก Google Sheets ไม่ได้");
         });
+    }
+
+    function populateShops(data) {
+      const shopSet = new Set(data.map(row => row["ร้าน"]).filter(Boolean));
+      const shopSelect = document.getElementById("shop-select");
+      shopSet.forEach(shop => {
+        const option = document.createElement("option");
+        option.value = shop;
+        option.textContent = shop;
+        shopSelect.appendChild(option);
+      });
     }
 
     function renderCards(data) {
@@ -123,11 +145,17 @@
     }
 
     function filterStatus(status) {
-      if (status === "all") {
-        renderCards(rawData);
-      } else {
-        renderCards(rawData.filter(row => (row["สถานะ"] || "") === status));
-      }
+      const shopFilter = document.getElementById("shop-select").value;
+      filteredData = rawData.filter(row => {
+        const matchStatus = status === 'all' || (row["สถานะ"] || '') === status;
+        const matchShop = shopFilter === 'all' || row["ร้าน"] === shopFilter;
+        return matchStatus && matchShop;
+      });
+      renderCards(filteredData);
+    }
+
+    function filterByShop() {
+      filterStatus('all');
     }
 
     function copyIMEI(imei) {
@@ -150,10 +178,10 @@
 
     function confirmStatusChange() {
       const remark = document.getElementById('remark-input').value || '-';
-      const row = rawData[currentRow.index];
+      const row = filteredData[currentRow.index];
       row["สถานะ"] = currentRow.action === 'active' ? 'Active' : '';
       row["หมายเหตุ"] = remark;
-      renderCards(rawData);
+      renderCards(filteredData);
       closeModal();
     }
 
