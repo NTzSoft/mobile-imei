@@ -160,11 +160,25 @@
       filterStatus('all');
     }
 
-    function copyIMEI(imei) {
-      navigator.clipboard.writeText(imei);
-      const alert = document.getElementById('alert-box');
-      alert.classList.remove('hidden');
-      setTimeout(() => alert.classList.add('hidden'), 2000);
+    function copyIMEI(imei, cardIndex) {
+      navigator.clipboard.writeText(imei).then(() => {
+        showToast("คัดลอก IMEI แล้ว");
+    
+        const card = document.getElementById(`card-${cardIndex}`);
+        const statusBadge = card.querySelector(".status-badge");
+        const originalStatus = statusBadge.innerText;
+        const originalColor = card.dataset.color;
+    
+        // เปลี่ยนสี card เป็นฟ้า
+        card.className = "rounded-xl border p-4 shadow-md bg-blue-100";
+        statusBadge.innerText = "กำลัง Copy...";
+    
+        setTimeout(() => {
+          // คืนค่ากลับสถานะเดิม
+          statusBadge.innerText = originalStatus;
+          card.className = `rounded-xl border p-4 shadow-md ${originalColor}`;
+        }, 2500);
+      });
     }
 
     function openModal(index, action) {
