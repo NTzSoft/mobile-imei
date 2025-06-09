@@ -162,7 +162,7 @@
 
     function copyIMEI(imei, cardIndex) {
       navigator.clipboard.writeText(imei).then(() => {
-        showToast("คัดลอก IMEI แล้ว");
+        showToast("คัดลอก IMEI "+ imei +" แล้ว");
     
         const card = document.getElementById(`card-${cardIndex}`);
         const statusBadge = card.querySelector(".status-badge");
