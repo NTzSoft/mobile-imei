@@ -114,12 +114,14 @@
             </div>
             <span class="status-badge inline-block px-2 py-1 text-xs font-semibold rounded-full ${row["สถานะ"] === "Active" ? "bg-green-500 text-white" : "bg-yellow-500 text-black"}">${statusText}</span>
           </div>
-          <div class="mt-4 flex gap-2">
-            <button onclick="copyIMEI('${row["IMEI"]}', ${index})" class="text-blue-600 underline">Copy IMEI</button>
-            <button onclick="openModal(${index}, '${row["สถานะ"] === "Active" ? "" : "Active"}')" class="text-sm text-white px-2 py-1 rounded ${row["สถานะ"] === "Active" ? "bg-red-500" : "bg-blue-500"}">
+          <div class="mt-4 flex justify-between items-center">
+            <button onclick="openModal(${index}, '${row["สถานะ"] === "Active" ? "" : "Active"}')" class="text-sm text-white px-2 py-1 rounded ${row["สถานะ"] === "Active" ? "bg-red-500" : "bg-green-500"}">
               ${row["สถานะ"] === "Active" ? "Deactive" : "Active"}
             </button>
+            <button onclick="copyIMEI('${row["IMEI"]}', ${index})" class="text-sm text-white px-2 py-1 rounded bg-blue-500">Copy IMEI</button>
           </div>
+
+
         `;
         container.appendChild(card);
       });
