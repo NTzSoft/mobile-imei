@@ -26,12 +26,12 @@
   <!-- Modal Overlay -->
   <div id="modal-overlay" class="fixed inset-0 bg-black bg-opacity-50 hidden flex justify-center items-center z-50">
     <div class="bg-white rounded-lg shadow-lg p-6 w-full max-w-md">
-      <h2 class="text-xl font-semibold mb-4">ยืนยันการ Active</h2>
+      <h2 id="modal-title" class="text-xl font-semibold mb-4">ยืนยันการเปลี่ยนสถานะ</h2>
       <p class="mb-2">หมายเหตุ:</p>
-      <textarea id="modal-note" rows="3" class="w-full border rounded p-2 mb-4" >Active เอง</textarea>
+      <textarea id="modal-note" rows="3" class="w-full border rounded p-2 mb-4"></textarea>
       <div class="flex justify-end gap-4">
         <button onclick="closeModal()" class="px-4 py-2 rounded border border-gray-400 hover:bg-gray-100">ยกเลิก</button>
-        <button onclick="confirmActive()" class="px-4 py-2 rounded bg-blue-600 text-white hover:bg-blue-700">ยืนยัน</button>
+        <button onclick="confirmChangeStatus()" class="px-4 py-2 rounded bg-blue-600 text-white hover:bg-blue-700">ยืนยัน</button>
       </div>
     </div>
   </div>
@@ -40,7 +40,8 @@
     const csvUrl = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSVlzVoxxhwFOFIfeQQEkPLbXHjdnyvuYTi6-UQJnldE9txyBc-EQbGKqwDP1j8-6zZoZC8r846lt1Q/pub?output=csv";
 
     let rawData = [];
-    let currentEditIndex = null;  // เก็บตำแหน่งข้อมูลที่กำลังแก้ไข
+    let currentEditIndex = null;
+    let currentAction = null; // "active" หรือ "deactive"
 
     function csvToJson(csv) {
       const lines = csv.trim().split('\n');
@@ -94,6 +95,24 @@
         if (row["สถานะ"] === 'Active') statusColor = 'text-green-600 font-semibold';
         else if (row["สถานะ"] === '') statusColor = 'text-red-600 font-semibold';
 
+        // ปุ่มสำหรับสถานะ Active กับ Deactive
+        let actionButton = '';
+        if (row["สถานะ"] === 'Active') {
+          actionButton = `
+            <button
+              class="bg-yellow-600 hover:bg-yellow-700 text-white px-3 py-1 rounded"
+              onclick="openModal(${index}, 'deactive')"
+            >Deactive</button>
+          `;
+        } else {
+          actionButton = `
+            <button
+              class="bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded"
+              onclick="openModal(${index}, 'active')"
+            >Active</button>
+          `;
+        }
+
         box.innerHTML = `
           <div>
             <h2 class="text-lg font-bold mb-1">${row["รุ่น"] || '-'}</h2>
@@ -110,11 +129,7 @@
               class="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded"
               onclick="copyToClipboard('${row["IMEI"]}')"
             >Copy IMEI</button>
-            ${row["สถานะ"] !== 'Active' ? `
-            <button
-              class="bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded"
-              onclick="openModal(${index})"
-            >Active</button>` : ''}
+            ${actionButton}
           </div>
         `;
         container.appendChild(box);
@@ -130,20 +145,32 @@
       }
     }
 
-    // Modal Control
-    function openModal(index) {
+    function openModal(index, action) {
       currentEditIndex = index;
-      document.getElementById('modal-note').value = 'Active เอง';
+      currentAction = action;
+
+      const modalTitle = document.getElementById('modal-title');
+      const modalNote = document.getElementById('modal-note');
+
+      if (action === 'active') {
+        modalTitle.textContent = 'ยืนยันการ Active';
+        modalNote.value = 'Active เอง';
+      } else if (action === 'deactive') {
+        modalTitle.textContent = 'ยืนยันการ Deactive';
+        modalNote.value = 'Deactive เอง';
+      }
+
       document.getElementById('modal-overlay').classList.remove('hidden');
     }
 
     function closeModal() {
       currentEditIndex = null;
+      currentAction = null;
       document.getElementById('modal-overlay').classList.add('hidden');
     }
 
-    function confirmActive() {
-      if (currentEditIndex === null) return;
+    function confirmChangeStatus() {
+      if (currentEditIndex === null || currentAction === null) return;
 
       const note = document.getElementById('modal-note').value.trim();
       if (!note) {
@@ -151,11 +178,14 @@
         return;
       }
 
-      // เปลี่ยนสถานะในข้อมูล rawData
-      rawData[currentEditIndex]["สถานะ"] = "Active";
-      rawData[currentEditIndex]["หมายเหตุ"] = note;
+      if (currentAction === 'active') {
+        rawData[currentEditIndex]["สถานะ"] = "Active";
+        rawData[currentEditIndex]["หมายเหตุ"] = note;
+      } else if (currentAction === 'deactive') {
+        rawData[currentEditIndex]["สถานะ"] = "";
+        rawData[currentEditIndex]["หมายเหตุ"] = note;
+      }
 
-      // ปิด modal และรีเฟรชการแสดงผล
       closeModal();
       renderBoxes(rawData);
     }
