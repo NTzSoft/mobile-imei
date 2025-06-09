@@ -12,36 +12,22 @@
   </header>
 
   <main class="p-6">
-    <div class="mb-4 flex gap-2">
+    <div class="mb-6 flex gap-2">
       <button onclick="filterStatus('all')" class="bg-gray-300 hover:bg-gray-400 text-black px-4 py-2 rounded">ทั้งหมด</button>
       <button onclick="filterStatus('Active')" class="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded">Active</button>
       <button onclick="filterStatus('')" class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded">ยังไม่ Active</button>
     </div>
 
-    <div class="overflow-x-auto">
-      <table class="min-w-full border bg-white rounded shadow">
-        <thead class="bg-blue-100">
-          <tr>
-            <th class="px-4 py-2 border">รุ่น</th>
-            <th class="px-4 py-2 border">สี</th>
-            <th class="px-4 py-2 border">ร้าน</th>
-            <th class="px-4 py-2 border">IMEI</th>
-            <th class="px-4 py-2 border">สถานะ</th>
-            <th class="px-4 py-2 border">หมายเหตุ</th>
-          </tr>
-        </thead>
-        <tbody id="data-body"></tbody>
-      </table>
+    <div id="data-container" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+      <!-- กล่องมือถือจะถูกสร้างที่นี่ -->
     </div>
   </main>
 
   <script>
-    // ใส่ลิงก์ CSV ที่ได้จาก Google Sheets Publish to web
     const csvUrl = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSVlzVoxxhwFOFIfeQQEkPLbXHjdnyvuYTi6-UQJnldE9txyBc-EQbGKqwDP1j8-6zZoZC8r846lt1Q/pub?output=csv";
 
     let rawData = [];
 
-    // ฟังก์ชันแปลง CSV เป็น JSON แบบง่าย (รองรับ ',' คั่น column)
     function csvToJson(csv) {
       const lines = csv.trim().split('\n');
       const headers = lines[0].split(',');
@@ -61,7 +47,7 @@
         .then(response => response.text())
         .then(csvText => {
           rawData = csvToJson(csvText);
-          renderTable(rawData);
+          renderBoxes(rawData);
         })
         .catch(err => {
           console.error('Error loading CSV:', err);
@@ -69,29 +55,46 @@
         });
     }
 
-    function renderTable(data) {
-      const tbody = document.getElementById('data-body');
-      tbody.innerHTML = '';
+    function renderBoxes(data) {
+      const container = document.getElementById('data-container');
+      container.innerHTML = '';
+
+      if (data.length === 0) {
+        container.innerHTML = '<p class="text-center text-gray-500 col-span-full">ไม่มีข้อมูล</p>';
+        return;
+      }
+
       data.forEach(row => {
-        const tr = document.createElement('tr');
-        tr.innerHTML = `
-          <td class="border px-4 py-2">${row["รุ่น"] || '-'}</td>
-          <td class="border px-4 py-2">${row["สี"] || '-'}</td>
-          <td class="border px-4 py-2">${row["ร้าน"] || '-'}</td>
-          <td class="border px-4 py-2">${row["IMEI"] || '-'}</td>
-          <td class="border px-4 py-2">${row["สถานะ"] || '-'}</td>
-          <td class="border px-4 py-2">${row["หมายเหตุ"] || '-'}</td>
+        const box = document.createElement('div');
+        box.className = "bg-white rounded-lg shadow p-4 flex flex-col justify-between";
+
+        // กำหนดสีสถานะ
+        let statusColor = 'text-gray-500';
+        if (row["สถานะ"] === 'Active') statusColor = 'text-green-600 font-semibold';
+        else if (row["สถานะ"] === '') statusColor = 'text-red-600 font-semibold';
+
+        box.innerHTML = `
+          <div>
+            <h2 class="text-lg font-bold mb-1">${row["รุ่น"] || '-'}</h2>
+            <p class="text-sm mb-1"><span class="font-semibold">สี:</span> ${row["สี"] || '-'}</p>
+            <p class="text-sm mb-1"><span class="font-semibold">ร้าน:</span> ${row["ร้าน"] || '-'}</p>
+            <p class="text-sm mb-1"><span class="font-semibold">IMEI:</span> ${row["IMEI"] || '-'}</p>
+          </div>
+          <div class="mt-3">
+            <p class="${statusColor}"><span class="font-semibold">สถานะ:</span> ${row["สถานะ"] || 'ยังไม่ Active'}</p>
+            <p class="text-sm text-gray-400"><span class="font-semibold">หมายเหตุ:</span> ${row["หมายเหตุ"] || '-'}</p>
+          </div>
         `;
-        tbody.appendChild(tr);
+        container.appendChild(box);
       });
     }
 
     function filterStatus(status) {
       if (status === 'all') {
-        renderTable(rawData);
+        renderBoxes(rawData);
       } else {
         const filtered = rawData.filter(row => (row["สถานะ"] || '') === status);
-        renderTable(filtered);
+        renderBoxes(filtered);
       }
     }
 
