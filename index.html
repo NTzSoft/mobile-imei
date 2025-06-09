@@ -23,8 +23,8 @@
   <main class="p-6">
     <div class="mb-4 flex gap-2 flex-wrap">
       <button onclick="filterStatus('all')" class="bg-gray-300 hover:bg-gray-400 text-black px-4 py-2 rounded">ทั้งหมด</button>
-      <button onclick="filterStatus('Active')" class="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded">Active</button>
-      <button onclick="filterStatus('')" class="bg-yellow-500 hover:bg-yellow-600 text-white px-4 py-2 rounded">ยังไม่ Active</button>
+      <button onclick="filterStatus('Active')" class="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded">ยิงแล้ว</button>
+      <button onclick="filterStatus('')" class="bg-yellow-500 hover:bg-yellow-600 text-white px-4 py-2 rounded">ยังไม่ได้ยิง</button>
       <select id="storeFilter" onchange="filterStore()" class="border rounded px-4 py-2">
         <option value="all">ร้านทั้งหมด</option>
       </select>
@@ -98,7 +98,7 @@
       container.innerHTML = "";
       data.forEach((row, index) => {
         const cardColor = row["สถานะ"] === "Active" ? "bg-green-100" : "bg-yellow-100";
-        const statusText = row["สถานะ"] === "Active" ? "Active" : "ยังไม่ Active";
+        const statusText = row["สถานะ"] === "Active" ? "ยิงแล้ว" : "ยังไม่ได้ยิง";
         const card = document.createElement("div");
         card.id = `card-${index}`;
         card.dataset.color = cardColor;
@@ -116,7 +116,7 @@
           </div>
           <div class="mt-4 flex justify-between items-center">
             <button onclick="openModal(${index}, '${row["สถานะ"] === "Active" ? "" : "Active"}')" class="text-sm text-white px-2 py-1 rounded ${row["สถานะ"] === "Active" ? "bg-red-500" : "bg-green-500"}">
-              ${row["สถานะ"] === "Active" ? "Deactive" : "Active"}
+              ${row["สถานะ"] === "Active" ? "ยกเลิก Active" : "กดเพื่อ Active"}
             </button>
             <button onclick="copyIMEI('${row["IMEI"]}', ${index})" class="text-sm text-white px-2 py-1 rounded bg-blue-500">Copy IMEI</button>
           </div>
