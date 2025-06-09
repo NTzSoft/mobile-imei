@@ -6,7 +6,16 @@
   <title>สถานะเครื่องมือถือ</title>
   <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body class="bg-gray-50">
+<body class="bg-gray-100">
+  <div id="auth-screen" class="fixed inset-0 bg-gray-900 bg-opacity-90 flex items-center justify-center z-50">
+    <div class="bg-white rounded-lg shadow-lg p-6 max-w-sm w-full">
+      <h2 class="text-lg font-semibold mb-4 text-center">กรุณาใส่รหัสผ่านเพื่อเข้าสู่ระบบ</h2>
+      <input id="password-input" type="password" placeholder="รหัสผ่าน" class="w-full px-3 py-2 border rounded mb-4 focus:outline-none focus:ring focus:border-blue-300">
+      <button onclick="checkPassword()" class="w-full bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">เข้าสู่ระบบ</button>
+      <p id="error-msg" class="text-red-500 text-sm mt-2 text-center hidden">รหัสผ่านไม่ถูกต้อง</p>
+    </div>
+  </div>
+  
   <header class="bg-blue-600 text-white p-4 shadow-md flex justify-between items-center">
     <h1 class="text-xl font-semibold">แสดงสถานะเครื่องมือถือ</h1>
     <a href="https://support.oppo.com/en/warranty-check/" target="_blank" class="bg-white text-blue-600 hover:bg-blue-100 px-4 py-2 rounded font-medium">
@@ -206,6 +215,17 @@
 
       closeModal();
       renderBoxes(rawData);
+    }
+
+    function checkPassword() {
+      const password = document.getElementById("password-input").value;
+      const errorMsg = document.getElementById("error-msg");
+    
+      if (password === "424520") {
+        document.getElementById("auth-screen").style.display = "none";
+      } else {
+        errorMsg.classList.remove("hidden");
+      }
     }
 
     loadData();
