@@ -6,58 +6,43 @@
   <title>สถานะเครื่องมือถือ</title>
   <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body class="bg-gray-100">
-
-  <!-- Auth Screen -->
-  <div id="auth-screen" class="fixed inset-0 bg-gray-900 bg-opacity-95 flex items-center justify-center z-50">
-    <div class="bg-white rounded-lg shadow-lg p-6 max-w-sm w-full">
-      <h2 class="text-lg font-semibold mb-4 text-center">กรุณาใส่รหัสผ่านเพื่อเข้าสู่ระบบ</h2>
-      <input id="password-input" type="password" placeholder="รหัสผ่าน" class="w-full px-3 py-2 border rounded mb-4 focus:outline-none focus:ring focus:border-blue-300">
-      <button onclick="checkPassword()" class="w-full bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">เข้าสู่ระบบ</button>
-      <p id="error-msg" class="text-red-500 text-sm mt-2 text-center hidden">รหัสผ่านไม่ถูกต้อง</p>
+<body class="bg-gray-50">
+  <div id="auth-overlay" class="fixed inset-0 bg-white z-50 flex items-center justify-center">
+    <div class="text-center">
+      <h2 class="mb-4 text-lg font-semibold">กรุณาใส่รหัสผ่านเพื่อเข้าใช้งาน</h2>
+      <input type="password" id="password-input" class="border p-2 rounded" placeholder="ใส่รหัสผ่าน" />
+      <button onclick="checkPassword()" class="bg-blue-600 text-white px-4 py-2 rounded ml-2">เข้าสู่ระบบ</button>
     </div>
   </div>
 
-  <!-- Main Content -->
-  <div id="main-content" style="display: none;">
-    <header class="bg-blue-600 text-white p-4 shadow-md flex justify-between items-center">
-      <h1 class="text-xl font-semibold">แสดงสถานะเครื่องมือถือ</h1>
-      <a href="https://support.oppo.com/en/warranty-check/" target="_blank" class="bg-white text-blue-600 px-4 py-2 rounded hover:bg-blue-100">Warranty Check</a>
-    </header>
+  <header class="bg-blue-600 text-white p-4 shadow-md flex justify-between items-center">
+    <h1 class="text-xl font-semibold">แสดงสถานะเครื่องมือถือ</h1>
+    <a href="https://support.oppo.com/en/warranty-check/" target="_blank" class="bg-white text-blue-600 px-4 py-2 rounded">Warranty Check</a>
+  </header>
 
-    <main class="p-4">
-      <!-- Filter Buttons -->
-      <div class="mb-4 flex flex-wrap gap-2 items-center">
-        <button onclick="filterStatus('all')" class="bg-gray-300 hover:bg-gray-400 text-black px-4 py-2 rounded">ทั้งหมด</button>
-        <button onclick="filterStatus('')" class="bg-yellow-500 hover:bg-yellow-600 text-white px-4 py-2 rounded">ยังไม่ Active</button>
-        <button onclick="filterStatus('Active')" class="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded">Active</button>
-        
+  <main class="p-6">
+    <div class="mb-4 flex gap-2 flex-wrap">
+      <button onclick="filterStatus('all')" class="bg-gray-300 hover:bg-gray-400 text-black px-4 py-2 rounded">ทั้งหมด</button>
+      <button onclick="filterStatus('Active')" class="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded">Active</button>
+      <button onclick="filterStatus('')" class="bg-yellow-500 hover:bg-yellow-600 text-white px-4 py-2 rounded">ยังไม่ Active</button>
+      <select id="storeFilter" onchange="filterStore()" class="border rounded px-4 py-2">
+        <option value="all">ร้านทั้งหมด</option>
+      </select>
+    </div>
 
-        <!-- Dropdown ร้านค้า -->
-        <select id="shop-select" onchange="filterByShop()" class="ml-auto border px-3 py-2 rounded">
-          <option value="all">-- ร้านทั้งหมด --</option>
-        </select>
-      </div>
+    <div id="toast" class="fixed bottom-4 right-4 bg-blue-500 text-white px-4 py-2 rounded shadow-md hidden z-50"></div>
 
-      <!-- แจ้งเตือน Copy -->
-      <div id="alert-box" class="fixed bottom-4 right-4 bg-blue-600 text-white px-4 py-2 rounded shadow hidden z-40">
-        Copy IMEI แล้ว
-      </div>
+    <div id="card-container" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4"></div>
+  </main>
 
-      <!-- Card List -->
-     <div id="card-container" class="grid gap-4 grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5"></div>
-
-    </main>
-
-    <!-- Modal ยืนยัน -->
-    <div id="modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-50">
-      <div class="bg-white rounded-lg shadow-lg p-6 w-full max-w-md">
-        <h2 class="text-lg font-semibold mb-4" id="modal-title">ยืนยันการเปลี่ยนสถานะ</h2>
-        <input type="text" id="remark-input" class="w-full px-3 py-2 border rounded mb-4" placeholder="หมายเหตุ (เช่น Active เอง)">
-        <div class="flex justify-end gap-2">
-          <button onclick="closeModal()" class="bg-gray-300 px-4 py-2 rounded">ยกเลิก</button>
-          <button onclick="confirmStatusChange()" class="bg-blue-600 text-white px-4 py-2 rounded">ยืนยัน</button>
-        </div>
+  <!-- Modal -->
+  <div id="modal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
+    <div class="bg-white p-6 rounded shadow-md w-full max-w-md">
+      <h2 class="text-lg font-bold mb-4" id="modal-title"></h2>
+      <textarea id="note-input" rows="3" class="w-full border rounded p-2 mb-4" placeholder="ระบุหมายเหตุ"></textarea>
+      <div class="flex justify-end gap-2">
+        <button onclick="closeModal()" class="bg-gray-300 px-4 py-2 rounded">ยกเลิก</button>
+        <button onclick="confirmStatusChange()" class="bg-blue-600 text-white px-4 py-2 rounded">ยืนยัน</button>
       </div>
     </div>
   </div>
@@ -66,15 +51,22 @@
     const csvUrl = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSVlzVoxxhwFOFIfeQQEkPLbXHjdnyvuYTi6-UQJnldE9txyBc-EQbGKqwDP1j8-6zZoZC8r846lt1Q/pub?output=csv";
     let rawData = [];
     let filteredData = [];
-    let currentRow = null;
+    let changingIndex = null;
+    let changingStatus = "";
+
+    function showToast(msg) {
+      const toast = document.getElementById("toast");
+      toast.innerText = msg;
+      toast.classList.remove("hidden");
+      setTimeout(() => toast.classList.add("hidden"), 2500);
+    }
 
     function checkPassword() {
-      const password = document.getElementById("password-input").value;
-      if (password === "424520") {
-        document.getElementById("auth-screen").style.display = "none";
-        document.getElementById("main-content").style.display = "block";
+      const input = document.getElementById("password-input").value;
+      if (input === "424520") {
+        document.getElementById("auth-overlay").classList.add("hidden");
       } else {
-        document.getElementById("error-msg").classList.remove("hidden");
+        alert("รหัสผ่านไม่ถูกต้อง");
       }
     }
 
@@ -84,9 +76,7 @@
       return lines.slice(1).map(line => {
         const values = line.split(',');
         let obj = {};
-        headers.forEach((h, i) => {
-          obj[h.trim()] = values[i] ? values[i].trim() : '';
-        });
+        headers.forEach((h, i) => obj[h.trim()] = values[i] ? values[i].trim() : '');
         return obj;
       });
     }
@@ -94,118 +84,106 @@
     function loadData() {
       fetch(csvUrl)
         .then(res => res.text())
-        .then(csvText => {
-          rawData = csvToJson(csvText);
-          filteredData = [...rawData];
-          populateShops(rawData);
+        .then(csv => {
+          rawData = csvToJson(csv);
+          filteredData = rawData;
           renderCards(filteredData);
+          populateStoreFilter();
         })
-        .catch(err => {
-          console.error("โหลดข้อมูลล้มเหลว", err);
-          alert("โหลดข้อมูลจาก Google Sheets ไม่ได้");
-        });
-    }
-
-    function populateShops(data) {
-      const shopSet = new Set(data.map(row => row["ร้าน"]).filter(Boolean));
-      const shopSelect = document.getElementById("shop-select");
-      shopSet.forEach(shop => {
-        const option = document.createElement("option");
-        option.value = shop;
-        option.textContent = shop;
-        shopSelect.appendChild(option);
-      });
+        .catch(err => alert("โหลดข้อมูลไม่สำเร็จ"));
     }
 
     function renderCards(data) {
-      const container = document.getElementById('card-container');
-      container.innerHTML = '';
+      const container = document.getElementById("card-container");
+      container.innerHTML = "";
       data.forEach((row, index) => {
-        const status = row["สถานะ"] || '';
-        const statusColor = status === "Active" ? "bg-green-100 text-green-800" : "bg-yellow-100 text-yellow-800";
-        const statusLabel = status === "Active" ? "Active" : "ยังไม่ Active";
-
-        const card = document.createElement('div');
         const cardColor = row["สถานะ"] === "Active" ? "bg-green-100" : "bg-yellow-100";
         const statusText = row["สถานะ"] === "Active" ? "Active" : "ยังไม่ Active";
-        
+        const card = document.createElement("div");
+        card.id = `card-${index}`;
+        card.dataset.color = cardColor;
+        card.className = `rounded-xl border p-4 shadow-md ${cardColor}`;
         card.innerHTML = `
-          <div id="card-${index}" class="rounded-xl border p-4 shadow-md ${cardColor}" data-color="${cardColor}">
-            <div class="flex justify-between items-start">
-              <div>
-                <h2 class="text-lg font-bold">${row["รุ่น"] || '-'}</h2>
-                <p class="text-sm text-gray-600">${row["สี"] || '-'}</p>
-                <p class="text-sm text-gray-600">${row["ร้าน"] || '-'}</p>
-                <p class="text-sm text-gray-800">IMEI: ${row["IMEI"] || '-'}</p>
-                <p class="text-sm text-gray-800">หมายเหตุ: ${row["หมายเหตุ"] || '-'}</p>
-              </div>
-              <span class="status-badge inline-block px-2 py-1 text-xs font-semibold rounded-full ${
-                row["สถานะ"] === "Active" ? "bg-green-500 text-white" : "bg-yellow-500 text-black"
-              }">${statusText}</span>
+          <div class="flex justify-between items-start">
+            <div>
+              <h2 class="text-lg font-bold">${row["รุ่น"] || '-'}</h2>
+              <p class="text-sm text-gray-600">${row["สี"] || '-'}</p>
+              <p class="text-sm text-gray-600">${row["ร้าน"] || '-'}</p>
+              <p class="text-sm text-gray-800">IMEI: ${row["IMEI"] || '-'}</p>
+              <p class="text-sm text-gray-800">หมายเหตุ: ${row["หมายเหตุ"] || '-'}</p>
             </div>
-            <div class="mt-4 flex gap-2">
-              <button onclick="copyIMEI('${row["IMEI"]}', ${index})" class="text-blue-600 underline">Copy IMEI</button>
-              ...
-            </div>
+            <span class="status-badge inline-block px-2 py-1 text-xs font-semibold rounded-full ${row["สถานะ"] === "Active" ? "bg-green-500 text-white" : "bg-yellow-500 text-black"}">${statusText}</span>
+          </div>
+          <div class="mt-4 flex gap-2">
+            <button onclick="copyIMEI('${row["IMEI"]}', ${index})" class="text-blue-600 underline">Copy IMEI</button>
+            <button onclick="openModal(${index}, '${row["สถานะ"] === "Active" ? "" : "Active"}')" class="text-sm text-white px-2 py-1 rounded ${row["สถานะ"] === "Active" ? "bg-red-500" : "bg-blue-500"}">
+              ${row["สถานะ"] === "Active" ? "Deactive" : "Active"}
+            </button>
           </div>
         `;
         container.appendChild(card);
       });
     }
 
-    function filterStatus(status) {
-      const shopFilter = document.getElementById("shop-select").value;
-      filteredData = rawData.filter(row => {
-        const matchStatus = status === 'all' || (row["สถานะ"] || '') === status;
-        const matchShop = shopFilter === 'all' || row["ร้าน"] === shopFilter;
-        return matchStatus && matchShop;
-      });
-      renderCards(filteredData);
-    }
-
-    function filterByShop() {
-      filterStatus('all');
-    }
-
-    function copyIMEI(imei, cardIndex) {
+    function copyIMEI(imei, index) {
       navigator.clipboard.writeText(imei).then(() => {
         showToast("คัดลอก IMEI แล้ว");
-    
-        const card = document.getElementById(`card-${cardIndex}`);
-        const statusBadge = card.querySelector(".status-badge");
-        const originalStatus = statusBadge.innerText;
+        const card = document.getElementById(`card-${index}`);
+        const badge = card.querySelector(".status-badge");
+        const originalText = badge.innerText;
         const originalColor = card.dataset.color;
-    
-        // เปลี่ยนสี card เป็นฟ้า
+
         card.className = "rounded-xl border p-4 shadow-md bg-blue-100";
-        statusBadge.innerText = "กำลัง Copy...";
-    
+        badge.innerText = "กำลัง Copy...";
+
         setTimeout(() => {
-          // คืนค่ากลับสถานะเดิม
-          statusBadge.innerText = originalStatus;
+          badge.innerText = originalText;
           card.className = `rounded-xl border p-4 shadow-md ${originalColor}`;
         }, 2500);
       });
     }
 
-    function openModal(index, action) {
-      currentRow = { index, action };
-      document.getElementById('remark-input').value = action === 'active' ? 'Active เอง' : 'Deactive เอง';
-      document.getElementById('modal-title').innerText = action === 'active' ? 'ยืนยันการ Active' : 'ยืนยันการ Deactive';
-      document.getElementById('modal').classList.remove('hidden');
+    function openModal(index, newStatus) {
+      changingIndex = index;
+      changingStatus = newStatus;
+      document.getElementById("note-input").value = newStatus === "Active" ? "Active เอง" : "";
+      document.getElementById("modal-title").innerText = `ยืนยันการเปลี่ยนสถานะเป็น ${newStatus || "ยังไม่ Active"}`;
+      document.getElementById("modal").classList.remove("hidden");
     }
 
     function closeModal() {
-      document.getElementById('modal').classList.add('hidden');
+      document.getElementById("modal").classList.add("hidden");
     }
 
     function confirmStatusChange() {
-      const remark = document.getElementById('remark-input').value || '-';
-      const row = filteredData[currentRow.index];
-      row["สถานะ"] = currentRow.action === 'active' ? 'Active' : '';
-      row["หมายเหตุ"] = remark;
+      const note = document.getElementById("note-input").value;
+      rawData[changingIndex]["สถานะ"] = changingStatus;
+      rawData[changingIndex]["หมายเหตุ"] = note;
       renderCards(filteredData);
       closeModal();
+    }
+
+    function filterStatus(status) {
+      filteredData = status === "all" ? rawData : rawData.filter(r => (r["สถานะ"] || "") === status);
+      renderCards(filteredData);
+    }
+
+    function populateStoreFilter() {
+      const storeSet = new Set(rawData.map(r => r["ร้าน"]));
+      const select = document.getElementById("storeFilter");
+      storeSet.forEach(store => {
+        const opt = document.createElement("option");
+        opt.value = store;
+        opt.innerText = store;
+        select.appendChild(opt);
+      });
+    }
+
+    function filterStore() {
+      const selected = document.getElementById("storeFilter").value;
+      const base = selected === "all" ? rawData : rawData.filter(r => r["ร้าน"] === selected);
+      filteredData = base;
+      renderCards(filteredData);
     }
 
     loadData();
