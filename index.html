@@ -69,13 +69,27 @@
           alert('ไม่สามารถโหลดข้อมูลจาก Google Sheets ได้');
         });
     }
-
+  
     function copyToClipboard(text) {
       navigator.clipboard.writeText(text).then(() => {
-        alert('คัดลอก IMEI: ' + text);
+        showToast(`คัดลอก IMEI แล้ว: ${text}`);
       }).catch(() => {
-        alert('คัดลอกไม่สำเร็จ');
+        showToast('ไม่สามารถคัดลอก IMEI ได้');
       });
+    }
+    
+    function showToast(message) {
+      const toast = document.getElementById('toast');
+      toast.textContent = message;
+      toast.classList.remove('hidden');
+    
+      // ล้าง timeout เก่า (ถ้ามี)
+      if (window.toastTimeout) clearTimeout(window.toastTimeout);
+    
+      // ซ่อนหลัง 2.5 วิ
+      window.toastTimeout = setTimeout(() => {
+        toast.classList.add('hidden');
+      }, 2500);
     }
 
     function renderBoxes(data) {
@@ -193,4 +207,7 @@
     loadData();
   </script>
 </body>
+  <!-- Toast Notification -->
+<div id="toast" class="fixed bottom-5 right-5 bg-blue-500 text-white px-4 py-2 rounded shadow-lg hidden z-50"></div>
+
 </html>
