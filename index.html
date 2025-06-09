@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>สถานะเครื่องมือถือ</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-50">
+  <header class="bg-blue-600 text-white p-4 shadow-md">
+    <h1 class="text-xl font-semibold">แสดงสถานะเครื่องมือถือ</h1>
+  </header>
+
+  <main class="p-6">
+    <div class="mb-4 flex gap-2">
+      <button onclick="filterStatus('all')" class="bg-gray-300 hover:bg-gray-400 text-black px-4 py-2 rounded">ทั้งหมด</button>
+      <button onclick="filterStatus('Active')" class="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded">Active</button>
+      <button onclick="filterStatus('')" class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded">ยังไม่ Active</button>
+    </div>
+
+    <div class="overflow-x-auto">
+      <table class="min-w-full border bg-white rounded shadow">
+        <thead class="bg-blue-100">
+          <tr>
+            <th class="px-4 py-2 border">รุ่น</th>
+            <th class="px-4 py-2 border">สี</th>
+            <th class="px-4 py-2 border">ร้าน</th>
+            <th class="px-4 py-2 border">IMEI</th>
+            <th class="px-4 py-2 border">สถานะ</th>
+            <th class="px-4 py-2 border">หมายเหตุ</th>
+          </tr>
+        </thead>
+        <tbody id="data-body"></tbody>
+      </table>
+    </div>
+  </main>
+
+  <script>
+    // ใส่ลิงก์ CSV ที่ได้จาก Google Sheets Publish to web
+    const csvUrl = "https://docs.google.com/spreadsheets/d/e/2PACX-.../pub?output=csv";
+
+    let rawData = [];
+
+    // ฟังก์ชันแปลง CSV เป็น JSON แบบง่าย (รองรับ ',' คั่น column)
+    function csvToJson(csv) {
+      const lines = csv.trim().split('\n');
+      const headers = lines[0].split(',');
+
+      return lines.slice(1).map(line => {
+        const values = line.split(',');
+        let obj = {};
+        headers.forEach((h, i) => {
+          obj[h.trim()] = values[i] ? values[i].trim() : '';
+        });
+        return obj;
+      });
+    }
+
+    function loadData() {
+      fetch(csvUrl)
+        .then(response => response.text())
+        .then(csvText => {
+          rawData = csvToJson(csvText);
+          renderTable(rawData);
+        })
+        .catch(err => {
+          console.error('Error loading CSV:', err);
+          alert('ไม่สามารถโหลดข้อมูลจาก Google Sheets ได้');
+        });
+    }
+
+    function renderTable(data) {
+      const tbody = document.getElementById('data-body');
+      tbody.innerHTML = '';
+      data.forEach(row => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td class="border px-4 py-2">${row["รุ่น"] || '-'}</td>
+          <td class="border px-4 py-2">${row["สี"] || '-'}</td>
+          <td class="border px-4 py-2">${row["ร้าน"] || '-'}</td>
+          <td class="border px-4 py-2">${row["IMEI"] || '-'}</td>
+          <td class="border px-4 py-2">${row["สถานะ"] || '-'}</td>
+          <td class="border px-4 py-2">${row["หมายเหตุ"] || '-'}</td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    function filterStatus(status) {
+      if (status === 'all') {
+        renderTable(rawData);
+      } else {
+        const filtered = rawData.filter(row => (row["สถานะ"] || '') === status);
+        renderTable(filtered);
+      }
+    }
+
+    loadData();
+  </script>
+</body>
+</html>
